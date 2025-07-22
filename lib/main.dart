@@ -46,20 +46,19 @@ class AuthExampleState extends State<AuthExample> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: const Text("Firebase Auth")),
-    body: Center(
-    child: Column(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-    Text(status),
-    ElevatedButton(
-    onPressed: signInAnonymously,
-    child: const Text("Login anónimo"),
-    ),
-    ],
-    ),
-    ),
+      appBar: AppBar(title: const Text("Firebase Auth")),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(status),
+            ElevatedButton(
+              onPressed: signInAnonymously,
+              child: const Text("Login anónimo"),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
-
