@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,47 +16,125 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Firebase Auth Demo',
-      home: const AuthExample(), // ✅ marcado como const
+      title: 'Mi App Firebase',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        useMaterial3: true,
+      ),
+      home: const AuthWrapper(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
 
-class AuthExample extends StatefulWidget {
-  const AuthExample({super.key}); // ✅ Constructor con key
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key});
 
   @override
-  AuthExampleState createState() => AuthExampleState(); // ✅ clase pública
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.active) {
+          return snapshot.data != null
+              ? HomeScreen(user: snapshot.data!)
+              : const LoginScreen();
+        }
+        return const Center(child: CircularProgressIndicator());
+      },
+    );
+  }
 }
 
-class AuthExampleState extends State<AuthExample> {
-  String status = "Not signed in";
+class LoginScreen extends StatelessWidget {
+  const LoginScreen({super.key});
 
-  void signInAnonymously() async {
+  Future<void> _signInAnonymously(BuildContext context) async {
     try {
       await FirebaseAuth.instance.signInAnonymously();
-      setState(() {
-        status = "Signed in anonymously";
-      });
     } catch (e) {
-      setState(() {
-        status = "Error: $e";
-      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Firebase Auth")),
+      appBar: AppBar(title: const Text('Login')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(status),
+            const Text('No autenticado'),
+            const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: signInAnonymously,
-              child: const Text("Login anónimo"),
+              onPressed: () => _signInAnonymously(context),
+              child: const Text('Login Anónimo'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class HomeScreen extends StatelessWidget {
+  final User user;
+
+  const HomeScreen({super.key, required this.user});
+
+  static const _apiUrl = 'http://localhost:3000/saludo';
+
+  Future<String> _fetchSaludo() async {
+    try {
+      final response = await http.get(Uri.parse(_apiUrl));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['mensaje'] ?? 'Mensaje no encontrado';
+      }
+      return 'Error HTTP: ${response.statusCode}';
+    } catch (e) {
+      return 'Error de conexión: ${e.toString()}';
+    }
+  }
+
+  Future<void> _signOut() async {
+    await FirebaseAuth.instance.signOut();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Bienvenido'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: _signOut,
+            tooltip: 'Cerrar sesión',
+          ),
+        ],
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Usuario: ${user.isAnonymous ? 'Anónimo' : user.email}'),
+            const SizedBox(height: 20),
+            FutureBuilder<String>(
+              future: _fetchSaludo(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const CircularProgressIndicator();
+                }
+                return Text(
+                  snapshot.hasData ? 'Saludo: ${snapshot.data}' : 'Error',
+                  style: Theme.of(context).textTheme.titleMedium,
+                );
+              },
             ),
           ],
         ),

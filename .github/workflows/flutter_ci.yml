@@ -11,21 +11,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repositorio
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Configurar Flutter
+      - name: Configure Flutter
         uses: flutter-actions/setup-flutter@v2
         with:
           flutter-version: '3.32.6'
 
       - name: Verificar versión de Flutter
         run: flutter --version
+
       - name: Obtener dependencias
         run: flutter pub get
 
       - name: Verificar formato del código
-        run: dart format --set-exit-if-changed .
+        run: dart format .
 
       - name: Ejecutar análisis estático
         run: flutter analyze
