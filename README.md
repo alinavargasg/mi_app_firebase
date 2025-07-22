@@ -1,67 +1,73 @@
-# Backend API - Servicio de Saludo
+# Aplicación Flutter con autenticación Firebase y conexión a backend API.
 
-## API simple construida con Node.js que proporciona un endpoint de saludo.
+🚀 Características principales
+✅ Autenticación anónima con Firebase
 
-1.- 🚀 Características
+🌐 Consumo de API backend (Node.js)
 
-- Endpoint GET `/saludo` que devuelve un mensaje de saludo
-- Configuración mínima con Express.js
-- Puerto configurable (3000 por defecto)
+🛡️ Protección de rutas basada en autenticación
 
-2.- 📦 Prerrequisitos
+📱 Interfaz limpia y responsive
 
-- Node.js v16+
-- npm o yarn
+🔄 Manejo de estados con StreamBuilder
 
-3.- 🔧 Instalación
+🔧 Requisitos técnicos
+Flutter SDK >= 3.0.0
+Dart >= 2.17.0
+Cuenta Firebase configurada
+Backend API corriendo (opcional)
 
-3.1. Clonar el repositorio:
-	git clone [URL_DEL_REPOSITORIO]
-	cd mi-backend-api
-3.2. Instalar dependencias:
-	npm install
-	o
-	yarn install
-4.- 🏃 Ejecución
-Para iniciar el servidor en desarrollo:
-	npm start
-	o
-	yarn start
-El servidor estará disponible en:
-	http://localhost:3000
+🛠️ Configuración inicial
+Clona el repositorio:
 
-5.- 🌐 Endpoints
-	GET /saludo
-	Devuelve un mensaje de saludo en formato JSON.
+	git clone https://github.com/tu-usuario/mi_app_firebase.git
+	cd mi_app_firebase
+Configura Firebase:
 
-	Ejemplo de respuesta:
-		json
-		{
-		  "mensaje": "¡Hola desde el backend!"
-		}
-6.- 🔧 Configuración
-	Puedes modificar el puerto creando un archivo .env:
-		PORT=4000
-	O pasando la variable de entorno al ejecutar:
-		PORT=4000 npm start
-7.- 🧪 Testing
-Para ejecutar pruebas (si existen):
-	npm test
-8.- 🛠️ Estructura del Proyecto
-mi-backend-api/
-├── node_modules/
-├── src/
-│   ├── app.js          # Configuración principal de Express
-│   ├── routes/         # Definición de rutas
-│   └── controllers/    # Lógica de los endpoints
-├── .env                # Variables de entorno (opcional)
-├── package.json
-└── README.md
-9.- 🤝 Contribución
+	Crea un proyecto en Firebase Console
+	Añade una aplicación Android/iOS
+Descarga los archivos de configuración:
+
+	google-services.json para Android
+	GoogleService-Info.plist para iOS
+
+Instala dependencias:
+
+	flutter pub get
+Configura variables de entorno:
+	Crea un archivo .env en la raíz del proyecto:
+🏃 Ejecutar la aplicación
+	flutter run
+🌐 Configuración del API
+La aplicación espera un backend con:
+
+	Endpoint GET /saludo
+
+Respuesta en formato JSON:
+
+	json
+	{
+ 	 "mensaje": "Texto del saludo"
+	}
+Para desarrollo local en Android, usa http://10.0.2.2:3000 como URL base.
+
+🔐 Configuración de Firebase
+Asegúrate de haber habilitado:
+
+Autenticación anónima en Firebase Console
+
+Reglas de seguridad básicas en Firebase Auth
+
+🤝 Contribuir
 Haz fork del proyecto
-Crea una rama (git checkout -b feature/nueva-funcionalidad)
+
+Crea tu rama (git checkout -b feature/nueva-funcionalidad)
+
 Haz commit de tus cambios (git commit -am 'Añade nueva funcionalidad')
+
 Haz push a la rama (git push origin feature/nueva-funcionalidad)
+
 Abre un Pull Request
 
-> ⌨️ Atentamente, María Alina Vargas García
+📄 Licencia
+MIT © [María Alina Vargas García]
