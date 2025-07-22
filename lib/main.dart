@@ -3,9 +3,16 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Configuración de logging
+  debugPrint = (String? message, {int? wrapWidth}) {
+    developer.log(message ?? '', name: 'APP');
+  };
+
   await Firebase.initializeApp();
   runApp(const MyApp());
 }
@@ -19,42 +26,28 @@ class MyApp extends StatelessWidget {
       title: 'Mi App Firebase',
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        useMaterial3: true,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: const AuthWrapper(),
-      debugShowCheckedModeBanner: false,
+      home: const AuthScreen(),
     );
   }
 }
 
-class AuthWrapper extends StatelessWidget {
-  const AuthWrapper({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.active) {
-          return snapshot.data != null
-              ? HomeScreen(user: snapshot.data!)
-              : const LoginScreen();
-        }
-        return const Center(child: CircularProgressIndicator());
-      },
-    );
-  }
-}
-
-class LoginScreen extends StatelessWidget {
-  const LoginScreen({super.key});
+class AuthScreen extends StatelessWidget {
+  const AuthScreen({super.key});
 
   Future<void> _signInAnonymously(BuildContext context) async {
     try {
-      await FirebaseAuth.instance.signInAnonymously();
+      final userCredential = await FirebaseAuth.instance.signInAnonymously();
+      developer.log('Usuario anónimo conectado: ${userCredential.user?.uid}');
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
     } catch (e) {
+      developer.log('Error en login anónimo: $e', error: e);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
+        SnackBar(content: Text('Error al conectar: ${e.toString()}')),
       );
     }
   }
@@ -62,16 +55,36 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
+      appBar: AppBar(
+        title: const Text('Autenticación'),
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('No autenticado'),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => _signInAnonymously(context),
-              child: const Text('Login Anónimo'),
+            const Text(
+              'Bienvenido a la App',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 40),
+            SizedBox(
+              width: 200,
+              height: 50,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurple, // Cambia el color
+                  padding: const EdgeInsets.symmetric(vertical: 15), // Ajusta el padding
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                /*Inicia sesión al hacer clic en el botón "Ingresar como Invitado"*/
+                onPressed: () => _signInAnonymously(context),
+                child: const Text(
+                  'Ingresar como Invitado',
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
+              ),
             ),
           ],
         ),
@@ -81,23 +94,20 @@ class LoginScreen extends StatelessWidget {
 }
 
 class HomeScreen extends StatelessWidget {
-  final User user;
-
-  const HomeScreen({super.key, required this.user});
-
-  static const _apiUrl = 'http://localhost:3000/saludo';
+  const HomeScreen({super.key});
 
   Future<String> _fetchSaludo() async {
     try {
-      final response = await http.get(Uri.parse(_apiUrl));
+      const url = 'http://10.0.2.2:3000/saludo'; // Para Android emulator
+      final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return data['mensaje'] ?? 'Mensaje no encontrado';
+        return jsonDecode(response.body)['mensaje'] ?? 'Mensaje no encontrado';
       }
-      return 'Error HTTP: ${response.statusCode}';
+      return 'Error en la API: ${response.statusCode}';
     } catch (e) {
-      return 'Error de conexión: ${e.toString()}';
+      developer.log('Error de conexión: $e', error: e);
+      return 'Error de conexión: Verifica tu servidor local';
     }
   }
 
@@ -109,34 +119,40 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bienvenido'),
+        title: const Text('Inicio'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: _signOut,
-            tooltip: 'Cerrar sesión',
+            onPressed: () async {
+              /*Cierra sesión al hacer clic en el icono de la parte superior derecha
+              de la pantalla*/
+              await _signOut();
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (_) => const AuthScreen()),
+              );
+            },
           ),
         ],
       ),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Usuario: ${user.isAnonymous ? 'Anónimo' : user.email}'),
-            const SizedBox(height: 20),
-            FutureBuilder<String>(
-              future: _fetchSaludo(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const CircularProgressIndicator();
-                }
-                return Text(
-                  snapshot.hasData ? 'Saludo: ${snapshot.data}' : 'Error',
-                  style: Theme.of(context).textTheme.titleMedium,
-                );
-              },
-            ),
-          ],
+        child: FutureBuilder<String>(
+          future: _fetchSaludo(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const CircularProgressIndicator();
+            }
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  snapshot.data ?? 'No hay mensaje',
+                  style: const TextStyle(fontSize: 20),
+                ),
+                const SizedBox(height: 20),
+                const Text('Estás autenticado como usuario anónimo'),
+              ],
+            );
+          },
         ),
       ),
     );
