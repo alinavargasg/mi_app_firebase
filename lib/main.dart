@@ -41,17 +41,17 @@ class AuthScreen extends StatelessWidget {
       final userCredential = await FirebaseAuth.instance.signInAnonymously();
       developer.log('Usuario anónimo conectado: ${userCredential.user?.uid}');
 
-      Navigator.of(context).pushReplacement(
+      Navigator.of(context, rootNavigator: true).pushReplacement(
         MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
     } catch (e) {
       developer.log('Error en login anónimo: $e', error: e);
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error al conectar: ${e.toString()}')),
       );
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
