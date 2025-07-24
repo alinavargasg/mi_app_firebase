@@ -5,6 +5,10 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:developer' as developer;
 
+// Definimos las claves globales a nivel de aplicación
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -28,6 +32,8 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
+      navigatorKey: navigatorKey, // Asignamos la clave de navegación
+      scaffoldMessengerKey: scaffoldMessengerKey, // Asignamos la clave para SnackBars
       home: const AuthScreen(),
     );
   }
@@ -36,22 +42,25 @@ class MyApp extends StatelessWidget {
 class AuthScreen extends StatelessWidget {
   const AuthScreen({super.key});
 
-  Future<void> _signInAnonymously(BuildContext context) async {
+  Future<void> _signInAnonymously() async {
     try {
       final userCredential = await FirebaseAuth.instance.signInAnonymously();
       developer.log('Usuario anónimo conectado: ${userCredential.user?.uid}');
 
-      Navigator.of(context, rootNavigator: true).pushReplacement(
+      // Usamos el navigatorKey global para navegación segura
+      navigatorKey.currentState?.pushReplacement(
         MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
     } catch (e) {
       developer.log('Error en login anónimo: $e', error: e);
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      // Usamos el scaffoldMessengerKey global para mostrar SnackBars
+      scaffoldMessengerKey.currentState?.showSnackBar(
         SnackBar(content: Text('Error al conectar: ${e.toString()}')),
       );
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -72,14 +81,13 @@ class AuthScreen extends StatelessWidget {
               height: 50,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurple, // Cambia el color
-                  padding: const EdgeInsets.symmetric(vertical: 15), // Ajusta el padding
+                  backgroundColor: Colors.deepPurple,
+                  padding: const EdgeInsets.symmetric(vertical: 15),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
                 ),
-                /*Inicia sesión al hacer clic en el botón "Ingresar como Invitado"*/
-                onPressed: () => _signInAnonymously(context),
+                onPressed: _signInAnonymously, // No pasamos el contexto
                 child: const Text(
                   'Ingresar como Invitado',
                   style: TextStyle(color: Colors.white, fontSize: 16),
@@ -113,6 +121,10 @@ class HomeScreen extends StatelessWidget {
 
   Future<void> _signOut() async {
     await FirebaseAuth.instance.signOut();
+    // Usamos el navigatorKey global para navegación segura
+    navigatorKey.currentState?.pushReplacement(
+      MaterialPageRoute(builder: (_) => const AuthScreen()),
+    );
   }
 
   @override
@@ -123,14 +135,7 @@ class HomeScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () async {
-              /*Cierra sesión al hacer clic en el icono de la parte superior derecha
-              de la pantalla*/
-              await _signOut();
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => const AuthScreen()),
-              );
-            },
+            onPressed: _signOut, // No necesitamos pasar contexto
           ),
         ],
       ),
